@@ -1,10 +1,10 @@
 package com.suaistuds.monitoringeqiupment.model.enums;
 
 public enum StatusReservationName {
-    PENDING,
-    CONFIRMED,
-    CANCELLED,
-    REJECTED,
-    RETURNED,
-    NOT_RETURNED
+    pending,
+    confirmed,
+    cancelled,
+    rejected,
+    returned,
+    not_returned
 }

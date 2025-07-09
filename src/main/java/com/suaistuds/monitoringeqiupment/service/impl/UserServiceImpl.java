@@ -59,7 +59,7 @@ public class UserServiceImpl implements UserService {
         u.setUsername(req.getUsername());
         u.setEmail(req.getEmail());
         u.setPassword(passwordEncoder.encode(req.getPassword()));
-        Role role = roleRepository.findByName(RoleName.USER)
+        Role role = roleRepository.findByName(RoleName.user)
                 .orElseThrow(() -> new AppException("User role not set"));
         u.setRole(role);
         User saved = userRepository.save(u);
@@ -72,7 +72,7 @@ public class UserServiceImpl implements UserService {
         User u = userRepository.getUserByName(username);
         boolean self = u.getId().equals(currentUser.getId());
         boolean admin = currentUser.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(RoleName.ADMIN.name()));
+                .anyMatch(a -> a.getAuthority().equals(RoleName.admin.name()));
         if (!self && !admin) {
             throw new UnauthorizedException("You don't have permission to update this user");
         }
@@ -89,7 +89,7 @@ public class UserServiceImpl implements UserService {
         User u = userRepository.getUserByName(username);
         boolean self = u.getId().equals(currentUser.getId());
         boolean admin = currentUser.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(RoleName.ADMIN.name()));
+                .anyMatch(a -> a.getAuthority().equals(RoleName.admin.name()));
         if (!self && !admin) {
             throw new UnauthorizedException("You don't have permission to delete this user");
         }
@@ -100,7 +100,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void giveAdmin(String username) {
         User u = userRepository.getUserByName(username);
-        Role admin = roleRepository.findByName(RoleName.ADMIN)
+        Role admin = roleRepository.findByName(RoleName.admin)
                 .orElseThrow(() -> new AppException("Admin role not set"));
         u.setRole(admin);
     }
@@ -109,7 +109,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void removeAdmin(String username) {
         User u = userRepository.getUserByName(username);
-        Role userRole = roleRepository.findByName(RoleName.USER)
+        Role userRole = roleRepository.findByName(RoleName.user)
                 .orElseThrow(() -> new AppException("User role not set"));
         u.setRole(userRole);
     }
@@ -118,7 +118,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void giveStudio(String username) {
         User u = userRepository.getUserByName(username);
-        Role studio = roleRepository.findByName(RoleName.STUDIO)
+        Role studio = roleRepository.findByName(RoleName.studio)
                 .orElseThrow(() -> new AppException("Studio role not set"));
         u.setRole(studio);
     }
@@ -127,7 +127,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void removeStudio(String username) {
         User u = userRepository.getUserByName(username);
-        Role userRole = roleRepository.findByName(RoleName.USER)
+        Role userRole = roleRepository.findByName(RoleName.user)
                 .orElseThrow(() -> new AppException("User role not set"));
         u.setRole(userRole);
     }

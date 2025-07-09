@@ -65,7 +65,7 @@ public class HistoryServiceImpl implements HistoryService {
 
         boolean owner = h.getCreatedBy().equals(currentUser.getId());
         boolean admin = currentUser.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(RoleName.ADMIN.name()));
+                .anyMatch(a -> a.getAuthority().equals(RoleName.admin.name()));
         if (!owner && !admin) {
             throw new UnauthorizedException(NO_PERM);
         }
@@ -106,7 +106,7 @@ public class HistoryServiceImpl implements HistoryService {
 
         boolean owner = h.getCreatedBy().equals(currentUser.getId());
         boolean admin = currentUser.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(RoleName.ADMIN.name()));
+                .anyMatch(a -> a.getAuthority().equals(RoleName.admin.name()));
         if (!owner && !admin) {
             throw new UnauthorizedException(NO_PERM);
         }

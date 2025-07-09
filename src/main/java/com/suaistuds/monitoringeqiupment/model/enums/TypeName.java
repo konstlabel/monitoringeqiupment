@@ -1,14 +1,14 @@
 package com.suaistuds.monitoringeqiupment.model.enums;
 
 public enum TypeName {
-    CAMERA,
-    LENS,
-    MICROPHONE,
-    TRIPOD,
-    LIGHT,
-    REFLECTOR,
-    AUDIO_RECORDER,
-    HEADPHONES,
-    STABILIZER,
-    BACKDROP
+    camera,
+    lens,
+    microphone,
+    tripod,
+    light,
+    reflector,
+    audio_recorder,
+    headphones,
+    stabilizer,
+    backdrop
 }
