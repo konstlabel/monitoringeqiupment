@@ -1,8 +1,6 @@
 package com.suaistuds.monitoringeqiupment.service;
 
 
-import com.suaistuds.monitoringeqiupment.model.entity.User;
-import com.suaistuds.monitoringeqiupment.payload.ApiResponse;
 import com.suaistuds.monitoringeqiupment.payload.user.*;
 import com.suaistuds.monitoringeqiupment.security.UserPrincipal;
 
@@ -16,9 +14,9 @@ public interface UserService {
 
     UserProfile getUserProfile(String username);
 
-    UserSummary create(SignUpRequest req);
+    UserSummary create(SignUpRequest signUpRequest);
 
-    UserSummary update(String username, UserUpdateRequest req, UserPrincipal currentUser);
+    UserSummary update(String username, UserUpdateRequest updateRequest, UserPrincipal currentUser);
 
     void delete(String username, UserPrincipal currentUser);
 

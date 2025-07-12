@@ -20,30 +20,35 @@ public class UserController {
 
     @GetMapping("/me")
     public UserSummary getCurrent(@CurrentUser UserPrincipal currentUser) {
+
         return userService.getCurrentUser(currentUser);
     }
 
     @GetMapping("/checkUsernameAvailability")
     public UserIdentityAvailability checkUsername(@RequestParam String username) {
+
         return userService.checkUsernameAvailability(username);
     }
 
     @GetMapping("/checkEmailAvailability")
     public UserIdentityAvailability checkEmail(@RequestParam String email) {
+
         return userService.checkEmailAvailability(email);
     }
 
     @GetMapping("/{username}")
     public UserProfile getProfile(@PathVariable String username) {
+
         return userService.getUserProfile(username);
     }
 
     @PutMapping("/{username}")
     public UserSummary update(
             @PathVariable String username,
-            @Valid @RequestBody UserUpdateRequest req,
+            @Valid @RequestBody UserUpdateRequest updateRequest,
             @CurrentUser UserPrincipal currentUser) {
-        return userService.update(username, req, currentUser);
+
+        return userService.update(username, updateRequest, currentUser);
     }
 
     @DeleteMapping("/{username}")
@@ -51,30 +56,35 @@ public class UserController {
     public void delete(
             @PathVariable String username,
             @CurrentUser UserPrincipal currentUser) {
+
         userService.delete(username, currentUser);
     }
 
     @PutMapping("/{username}/role/admin")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void giveAdmin(@PathVariable String username) {
+
         userService.giveAdmin(username);
     }
 
     @DeleteMapping("/{username}/role/admin")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeAdmin(@PathVariable String username) {
+
         userService.removeAdmin(username);
     }
 
     @PutMapping("/{username}/role/studio")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void giveStudio(@PathVariable String username) {
+
         userService.giveStudio(username);
     }
 
     @DeleteMapping("/{username}/role/studio")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeStudio(@PathVariable String username) {
+
         userService.removeStudio(username);
     }
 }

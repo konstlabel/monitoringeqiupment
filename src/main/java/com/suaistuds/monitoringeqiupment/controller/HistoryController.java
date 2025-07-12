@@ -21,6 +21,7 @@ public class HistoryController {
     public PagedResponse<HistoryResponse> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "30") int size) {
+
         return historyService.getAll(page, size);
     }
 
@@ -30,12 +31,10 @@ public class HistoryController {
     }
 
     @PutMapping("/{id}")
-    public HistoryResponse update(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateHistoryRequest req,
+    public HistoryResponse update(@Valid @RequestBody UpdateHistoryRequest updateRequest,
             @CurrentUser UserPrincipal currentUser) {
-        req.setId(id);
-        return historyService.update(req, currentUser);
+
+        return historyService.update(updateRequest, currentUser);
     }
 
     @DeleteMapping("/{id}")
@@ -43,6 +42,7 @@ public class HistoryController {
     public void delete(
             @PathVariable Long id,
             @CurrentUser UserPrincipal currentUser) {
+
         historyService.delete(id, currentUser);
     }
 
@@ -51,6 +51,7 @@ public class HistoryController {
             @PathVariable String username,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "30") int size) {
+
         return historyService.getByUser(username, page, size);
     }
 }

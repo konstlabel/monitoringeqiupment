@@ -9,8 +9,8 @@ import com.suaistuds.monitoringeqiupment.payload.PagedResponse;
 public interface EquipmentService {
     PagedResponse<EquipmentResponse> getAll(int page, int size);
     EquipmentResponse getById(Long id);
-    EquipmentResponse create(CreateEquipmentRequest req, UserPrincipal currentUser);
-    EquipmentResponse update(UpdateEquipmentRequest req, UserPrincipal currentUser);
+    EquipmentResponse create(CreateEquipmentRequest createRequest, UserPrincipal currentUser);
+    EquipmentResponse update(UpdateEquipmentRequest updateRequest, UserPrincipal currentUser);
     void delete(Long id, UserPrincipal currentUser);
     PagedResponse<EquipmentResponse> getByUser(String username, int page, int size);
 }

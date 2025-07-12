@@ -14,8 +14,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-// 5. UserServiceImpl
-
 @Service
 @Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
@@ -25,6 +23,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserSummary getCurrentUser(UserPrincipal currentUser) {
+        if (currentUser == null) {
+            throw new ResourceNotFoundException("User", "currentUser", null);
+        }
         return new UserSummary(currentUser.getId(), currentUser.getUsername());
     }
 
@@ -48,17 +49,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserSummary create(SignUpRequest req) {
-        if (userRepository.existsByUsername(req.getUsername())) {
+    public UserSummary create(SignUpRequest signUpRequest) {
+        if (userRepository.existsByUsername(signUpRequest.getUsername())) {
             throw new BadRequestException("Username is already taken");
         }
-        if (userRepository.existsByEmail(req.getEmail())) {
+        if (userRepository.existsByEmail(signUpRequest.getEmail())) {
             throw new BadRequestException("Email is already taken");
         }
         User u = new User();
-        u.setUsername(req.getUsername());
-        u.setEmail(req.getEmail());
-        u.setPassword(passwordEncoder.encode(req.getPassword()));
+        u.setUsername(signUpRequest.getUsername());
+        u.setEmail(signUpRequest.getEmail());
+        u.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
         Role role = roleRepository.findByName(RoleName.user)
                 .orElseThrow(() -> new AppException("User role not set"));
         u.setRole(role);
@@ -68,7 +69,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserSummary update(String username, UserUpdateRequest req, UserPrincipal currentUser) {
+    public UserSummary update(String username, UserUpdateRequest updateRequest, UserPrincipal currentUser) {
         User u = userRepository.getUserByName(username);
         boolean self = u.getId().equals(currentUser.getId());
         boolean admin = currentUser.getAuthorities().stream()
@@ -76,9 +77,9 @@ public class UserServiceImpl implements UserService {
         if (!self && !admin) {
             throw new UnauthorizedException("You don't have permission to update this user");
         }
-        u.setUsername(req.getUsername());
-        u.setEmail(req.getEmail());
-        u.setPassword(passwordEncoder.encode(req.getPassword()));
+        u.setUsername(updateRequest.getUsername());
+        u.setEmail(updateRequest.getEmail());
+        u.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
         User saved = userRepository.save(u);
         return new UserSummary(saved.getId(), saved.getUsername());
     }

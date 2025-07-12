@@ -2,17 +2,19 @@ package com.suaistuds.monitoringeqiupment.service.impl;
 
 import com.suaistuds.monitoringeqiupment.exception.ResourceNotFoundException;
 import com.suaistuds.monitoringeqiupment.exception.UnauthorizedException;
+import com.suaistuds.monitoringeqiupment.model.directory.StatusHistory;
+import com.suaistuds.monitoringeqiupment.model.directory.StatusReservation;
+import com.suaistuds.monitoringeqiupment.model.entity.History;
 import com.suaistuds.monitoringeqiupment.model.entity.Reservation;
 import com.suaistuds.monitoringeqiupment.model.entity.User;
 import com.suaistuds.monitoringeqiupment.model.enums.RoleName;
+import com.suaistuds.monitoringeqiupment.model.enums.StatusHistoryName;
+import com.suaistuds.monitoringeqiupment.model.enums.StatusReservationName;
 import com.suaistuds.monitoringeqiupment.payload.PagedResponse;
 import com.suaistuds.monitoringeqiupment.payload.reservation.CreateReservationRequest;
 import com.suaistuds.monitoringeqiupment.payload.reservation.ReservationResponse;
 import com.suaistuds.monitoringeqiupment.payload.reservation.UpdateReservationRequest;
-import com.suaistuds.monitoringeqiupment.repository.EquipmentRepository;
-import com.suaistuds.monitoringeqiupment.repository.ReservationRepository;
-import com.suaistuds.monitoringeqiupment.repository.StatusReservationRepository;
-import com.suaistuds.monitoringeqiupment.repository.UserRepository;
+import com.suaistuds.monitoringeqiupment.repository.*;
 import com.suaistuds.monitoringeqiupment.security.UserPrincipal;
 import com.suaistuds.monitoringeqiupment.service.ReservationService;
 import com.suaistuds.monitoringeqiupment.util.AppUtils;
@@ -25,6 +27,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.EnumSet;
 import java.util.List;
 
 @Service
@@ -38,6 +42,8 @@ public class ReservationServiceImpl implements ReservationService {
     @Autowired private EquipmentRepository equipmentRepository;
     @Autowired private UserRepository userRepository;
     @Autowired private StatusReservationRepository statusReservationRepository;
+    @Autowired private StatusHistoryRepository statusHistoryRepository;
+    @Autowired private HistoryRepository historyRepository;
     @Autowired private ModelMapper modelMapper;
 
     @Override
@@ -58,20 +64,20 @@ public class ReservationServiceImpl implements ReservationService {
 
     @Override
     @Transactional
-    public ReservationResponse create(CreateReservationRequest req, UserPrincipal currentUser) {
+    public ReservationResponse create(CreateReservationRequest createRequest, UserPrincipal currentUser) {
         Reservation r = new Reservation();
-        r.setEquipment(equipmentRepository.findById(req.getEquipmentId())
-                .orElseThrow(() -> new ResourceNotFoundException("Equipment", "id", req.getEquipmentId())));
+        r.setEquipment(equipmentRepository.findById(createRequest.getEquipmentId())
+                .orElseThrow(() -> new ResourceNotFoundException("Equipment", "id", createRequest.getEquipmentId())));
         r.setUser(userRepository.getUserByName(
-                userRepository.findById(req.getUserId()).orElseThrow(() ->
-                        new ResourceNotFoundException("User", "id", req.getUserId())).getUsername()));
+                userRepository.findById(createRequest.getUserId()).orElseThrow(() ->
+                        new ResourceNotFoundException("User", "id", createRequest.getUserId())).getUsername()));
         r.setResponsible(userRepository.getUserByName(
-                userRepository.findById(req.getResponsibleId()).orElseThrow(() ->
-                        new ResourceNotFoundException("User", "id", req.getResponsibleId())).getUsername()));
-        r.setStartDate(req.getStartDate());
-        r.setEndDate(req.getEndDate());
-        r.setStatusReservation(statusReservationRepository.findById(req.getStatusReservationId())
-                .orElseThrow(() -> new ResourceNotFoundException("StatusReservation", "id", req.getStatusReservationId())));
+                userRepository.findById(createRequest.getResponsibleId()).orElseThrow(() ->
+                        new ResourceNotFoundException("User", "id", createRequest.getResponsibleId())).getUsername()));
+        r.setStartDate(createRequest.getStartDate());
+        r.setEndDate(createRequest.getEndDate());
+        r.setStatusReservation(statusReservationRepository.findById(createRequest.getStatusReservationId())
+                .orElseThrow(() -> new ResourceNotFoundException("StatusReservation", "id", createRequest.getStatusReservationId())));
         r.setCreatedBy(currentUser.getId());
 
         Reservation saved = reservationRepository.save(r);
@@ -80,28 +86,60 @@ public class ReservationServiceImpl implements ReservationService {
 
     @Override
     @Transactional
-    public ReservationResponse update(UpdateReservationRequest req, UserPrincipal currentUser) {
-        Reservation r = reservationRepository.findById(req.getId())
-                .orElseThrow(() -> new ResourceNotFoundException(RES, "id", req.getId()));
+    public ReservationResponse update(UpdateReservationRequest updateRequest, UserPrincipal currentUser) {
+        Reservation r = reservationRepository.findById(updateRequest.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Reservation", "id", updateRequest.getId()));
 
         boolean owner = r.getCreatedBy().equals(currentUser.getId());
         boolean admin = currentUser.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals(RoleName.admin.name()));
         if (!owner && !admin) {
-            throw new UnauthorizedException(NO_PERM);
+            throw new UnauthorizedException("You don't have permission to make this operation");
         }
 
-        if (req.getEquipmentId() != null) {
-            r.setEquipment(equipmentRepository.findById(req.getEquipmentId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Equipment", "id", req.getEquipmentId())));
+        if (updateRequest.getEquipmentId() != null) {
+            r.setEquipment(equipmentRepository.findById(updateRequest.getEquipmentId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Equipment", "id", updateRequest.getEquipmentId())));
         }
-        if (req.getStartDate() != null) r.setStartDate(req.getStartDate());
-        if (req.getEndDate() != null)   r.setEndDate(req.getEndDate());
-        if (req.getStatusReservationId() != null) {
-            r.setStatusReservation(statusReservationRepository.findById(req.getStatusReservationId())
-                    .orElseThrow(() -> new ResourceNotFoundException("StatusReservation", "id", req.getStatusReservationId())));
+        if (updateRequest.getStartDate() != null) r.setStartDate(updateRequest.getStartDate());
+        if (updateRequest.getEndDate()   != null) r.setEndDate(updateRequest.getEndDate());
+
+        if (updateRequest.getStatusReservationId() != null) {
+            StatusReservation newStatus =
+                    statusReservationRepository.findById(updateRequest.getStatusReservationId())
+                            .orElseThrow(() -> new ResourceNotFoundException(
+                                    "StatusReservation", "id", updateRequest.getStatusReservationId()));
+            r.setStatusReservation(newStatus);
+
+            EnumSet<StatusReservationName> toArchive = EnumSet.of(
+                    StatusReservationName.cancelled,
+                    StatusReservationName.rejected,
+                    StatusReservationName.returned,
+                    StatusReservationName.not_returned
+            );
+            StatusReservationName srName = newStatus.getName();
+            if (toArchive.contains(srName)) {
+                StatusHistory sh = statusHistoryRepository.findByName(
+                                StatusHistoryName.valueOf(srName.name()))
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "StatusHistory", "name", srName.name()));
+
+                History history = History.builder()
+                        .equipment(r.getEquipment())
+                        .user(r.getUser())
+                        .responsible(r.getResponsible())
+                        .statusHistory(sh)
+                        .date(LocalDateTime.now())
+                        .build();
+                historyRepository.save(history);
+
+                reservationRepository.delete(r);
+
+                return null;
+            }
         }
 
+        // обычное сохранение, если статус не «архивный»
         Reservation updated = reservationRepository.save(r);
         return toDto(updated);
     }
@@ -142,12 +180,12 @@ public class ReservationServiceImpl implements ReservationService {
         return new PagedResponse<>(dtos, p.getNumber(), p.getSize(), p.getTotalElements(), p.getTotalPages(), p.isLast());
     }
 
-    private ReservationResponse toDto(Reservation r) {
-        ReservationResponse dto = modelMapper.map(r, ReservationResponse.class);
-        dto.setEquipmentId(r.getEquipment().getId());
-        dto.setUserId(r.getUser().getId());
-        dto.setResponsibleId(r.getResponsible().getId());
-        dto.setStatusReservationId(r.getStatusReservation().getId());
+    private ReservationResponse toDto(Reservation reservation) {
+        ReservationResponse dto = modelMapper.map(reservation, ReservationResponse.class);
+        dto.setEquipmentId(reservation.getEquipment().getId());
+        dto.setUserId(reservation.getUser().getId());
+        dto.setResponsibleId(reservation.getResponsible().getId());
+        dto.setStatusReservationId(reservation.getStatusReservation().getId());
         return dto;
     }
 }

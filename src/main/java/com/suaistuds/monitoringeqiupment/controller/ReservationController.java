@@ -23,6 +23,7 @@ public class ReservationController {
     public PagedResponse<ReservationResponse> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "30") int size) {
+
         return reservationService.getAll(page, size);
     }
 
@@ -33,19 +34,19 @@ public class ReservationController {
 
     @PostMapping
     public ResponseEntity<ReservationResponse> create(
-            @Valid @RequestBody CreateReservationRequest req,
+            @Valid @RequestBody CreateReservationRequest createRequest,
             @CurrentUser UserPrincipal currentUser) {
-        ReservationResponse dto = reservationService.create(req, currentUser);
+
+        ReservationResponse dto = reservationService.create(createRequest, currentUser);
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     public ReservationResponse update(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateReservationRequest req,
+            @Valid @RequestBody UpdateReservationRequest updateRequest,
             @CurrentUser UserPrincipal currentUser) {
-        req.setId(id);
-        return reservationService.update(req, currentUser);
+
+        return reservationService.update(updateRequest, currentUser);
     }
 
     @DeleteMapping("/{id}")
@@ -53,6 +54,7 @@ public class ReservationController {
     public void delete(
             @PathVariable Long id,
             @CurrentUser UserPrincipal currentUser) {
+
         reservationService.delete(id, currentUser);
     }
 
@@ -61,6 +63,7 @@ public class ReservationController {
             @PathVariable String username,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "30") int size) {
+
         return reservationService.getByUser(username, page, size);
     }
 
@@ -69,6 +72,7 @@ public class ReservationController {
             @PathVariable String username,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "30") int size) {
+
         return reservationService.getByResponsible(username, page, size);
     }
 }

@@ -12,9 +12,9 @@ public interface ReservationService {
 
     ReservationResponse getById(Long id);
 
-    ReservationResponse create(CreateReservationRequest req, UserPrincipal currentUser);
+    ReservationResponse create(CreateReservationRequest createRequest, UserPrincipal currentUser);
 
-    ReservationResponse update(UpdateReservationRequest req, UserPrincipal currentUser);
+    ReservationResponse update(UpdateReservationRequest updateRequest, UserPrincipal currentUser);
 
     void delete(Long id, UserPrincipal currentUser);
 

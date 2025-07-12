@@ -25,7 +25,6 @@ public class JwtTokenProvider {
     @Value("${app.jwtExpirationInMs}")
     private int jwtExpirationInMs;
 
-    // ← **обязательно**: поле для Key
     private Key key;
 
     @PostConstruct
@@ -43,12 +42,12 @@ public class JwtTokenProvider {
                 .setSubject(Long.toString(userPrincipal.getId()))
                 .setIssuedAt(now)
                 .setExpiration(expiry)
-                .signWith(key)            // signWith(Key) — теперь без указывания алгоритма
+                .signWith(key)
                 .compact();
     }
 
     public Long getUserIdFromJWT(String token) {
-        Claims claims = Jwts.parserBuilder()   // ← здесь parserBuilder() уже есть
+        Claims claims = Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)

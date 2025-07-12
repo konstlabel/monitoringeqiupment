@@ -7,6 +7,7 @@ import com.suaistuds.monitoringeqiupment.model.entity.Equipment;
 import com.suaistuds.monitoringeqiupment.model.entity.History;
 import com.suaistuds.monitoringeqiupment.model.entity.User;
 import com.suaistuds.monitoringeqiupment.model.enums.RoleName;
+import com.suaistuds.monitoringeqiupment.payload.History.CreateHistoryRequest;
 import com.suaistuds.monitoringeqiupment.payload.History.HistoryResponse;
 import com.suaistuds.monitoringeqiupment.payload.History.UpdateHistoryRequest;
 import com.suaistuds.monitoringeqiupment.payload.PagedResponse;
@@ -59,9 +60,34 @@ public class HistoryServiceImpl implements HistoryService {
 
     @Override
     @Transactional
-    public HistoryResponse update(UpdateHistoryRequest req, UserPrincipal currentUser) {
-        History h = historyRepository.findById(req.getId())
-                .orElseThrow(() -> new ResourceNotFoundException(HISTORY, "id", req.getId()));
+    public HistoryResponse create(CreateHistoryRequest createRequest, UserPrincipal currentUser) {
+        Equipment equipment = equipmentRepository.findById(createRequest.getEquipmentId())
+                .orElseThrow(() -> new ResourceNotFoundException("Equipment", "id", createRequest.getEquipmentId()));
+        User user = userRepository.findById(createRequest.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", createRequest.getUserId()));
+        User responsible = userRepository.findById(createRequest.getResponsibleId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", createRequest.getResponsibleId()));
+        StatusHistory statusHistory = statusHistoryRepository.findById(createRequest.getStatusHistoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("StatusHistory", "id", createRequest.getStatusHistoryId()));
+
+        History history = History.builder()
+                .equipment(equipment)
+                .user(user)
+                .responsible(responsible)
+                .statusHistory(statusHistory)
+                .date(createRequest.getDate())
+                .build();
+
+        History saved = historyRepository.save(history);
+        return toDto(saved);
+    }
+
+
+    @Override
+    @Transactional
+    public HistoryResponse update(UpdateHistoryRequest updateRequest, UserPrincipal currentUser) {
+        History h = historyRepository.findById(updateRequest.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(HISTORY, "id", updateRequest.getId()));
 
         boolean owner = h.getCreatedBy().equals(currentUser.getId());
         boolean admin = currentUser.getAuthorities().stream()
@@ -70,28 +96,28 @@ public class HistoryServiceImpl implements HistoryService {
             throw new UnauthorizedException(NO_PERM);
         }
 
-        if (req.getEquipmentId() != null) {
-            Equipment eq = equipmentRepository.findById(req.getEquipmentId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Equipment", "id", req.getEquipmentId()));
+        if (updateRequest.getEquipmentId() != null) {
+            Equipment eq = equipmentRepository.findById(updateRequest.getEquipmentId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Equipment", "id", updateRequest.getEquipmentId()));
             h.setEquipment(eq);
         }
-        if (req.getUserId() != null) {
-            User u = userRepository.findById(req.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User", "id", req.getUserId()));
+        if (updateRequest.getUserId() != null) {
+            User u = userRepository.findById(updateRequest.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User", "id", updateRequest.getUserId()));
             h.setUser(u);
         }
-        if (req.getResponsibleId() != null) {
-            User r = userRepository.findById(req.getResponsibleId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User", "id", req.getResponsibleId()));
+        if (updateRequest.getResponsibleId() != null) {
+            User r = userRepository.findById(updateRequest.getResponsibleId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User", "id", updateRequest.getResponsibleId()));
             h.setResponsible(r);
         }
-        if (req.getStatusHistoryId() != null) {
-            StatusHistory sh = statusHistoryRepository.findById(req.getStatusHistoryId())
-                    .orElseThrow(() -> new ResourceNotFoundException("StatusHistory", "id", req.getStatusHistoryId()));
+        if (updateRequest.getStatusHistoryId() != null) {
+            StatusHistory sh = statusHistoryRepository.findById(updateRequest.getStatusHistoryId())
+                    .orElseThrow(() -> new ResourceNotFoundException("StatusHistory", "id", updateRequest.getStatusHistoryId()));
             h.setStatusHistory(sh);
         }
-        if (req.getDate() != null) {
-            h.setDate(req.getDate());
+        if (updateRequest.getDate() != null) {
+            h.setDate(updateRequest.getDate());
         }
 
         History updated = historyRepository.save(h);

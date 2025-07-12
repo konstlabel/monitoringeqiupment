@@ -61,17 +61,17 @@ public class EquipmentServiceImpl implements EquipmentService {
 
     @Override
     @Transactional
-    public EquipmentResponse create(CreateEquipmentRequest req, UserPrincipal currentUser) {
+    public EquipmentResponse create(CreateEquipmentRequest createRequest, UserPrincipal currentUser) {
         Equipment e = new Equipment();
-        e.setName(req.getName());
-        e.setSerialNumber(req.getSerialNumber());
+        e.setName(createRequest.getName());
+        e.setSerialNumber(createRequest.getSerialNumber());
 
-        StatusEquipment status = statusEquipmentRepository.findById(req.getStatusId())
-                .orElseThrow(() -> new ResourceNotFoundException("StatusEquipment", "id", req.getStatusId()));
+        StatusEquipment status = statusEquipmentRepository.findById(createRequest.getStatusId())
+                .orElseThrow(() -> new ResourceNotFoundException("StatusEquipment", "id", createRequest.getStatusId()));
         e.setStatus(status);
 
-        Type type = typeRepository.findById(req.getTypeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Type", "id", req.getTypeId()));
+        Type type = typeRepository.findById(createRequest.getTypeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Type", "id", createRequest.getTypeId()));
         e.setType(type);
 
         e.setCreatedBy(currentUser.getId());
@@ -81,9 +81,9 @@ public class EquipmentServiceImpl implements EquipmentService {
 
     @Override
     @Transactional
-    public EquipmentResponse update(UpdateEquipmentRequest req, UserPrincipal currentUser) {
-        Equipment e = equipmentRepository.findById(req.getId())
-                .orElseThrow(() -> new ResourceNotFoundException(EQUIPMENT, "id", req.getId()));
+    public EquipmentResponse update(UpdateEquipmentRequest updateRequest, UserPrincipal currentUser) {
+        Equipment e = equipmentRepository.findById(updateRequest.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(EQUIPMENT, "id", updateRequest.getId()));
 
         boolean owner = e.getCreatedBy().equals(currentUser.getId());
         boolean admin = currentUser.getAuthorities().stream()
@@ -92,15 +92,15 @@ public class EquipmentServiceImpl implements EquipmentService {
             throw new UnauthorizedException(NO_PERM);
         }
 
-        e.setName(req.getName());
-        e.setSerialNumber(req.getSerialNumber());
+        e.setName(updateRequest.getName());
+        e.setSerialNumber(updateRequest.getSerialNumber());
 
-        StatusEquipment status = statusEquipmentRepository.findById(req.getStatusId())
-                .orElseThrow(() -> new ResourceNotFoundException("StatusEquipment", "id", req.getStatusId()));
+        StatusEquipment status = statusEquipmentRepository.findById(updateRequest.getStatusId())
+                .orElseThrow(() -> new ResourceNotFoundException("StatusEquipment", "id", updateRequest.getStatusId()));
         e.setStatus(status);
 
-        Type type = typeRepository.findById(req.getTypeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Type", "id", req.getTypeId()));
+        Type type = typeRepository.findById(updateRequest.getTypeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Type", "id", updateRequest.getTypeId()));
         e.setType(type);
 
         Equipment updated = equipmentRepository.save(e);

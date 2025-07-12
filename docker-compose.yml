@@ -34,13 +34,9 @@ services:
         &allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: appuser
       SPRING_DATASOURCE_PASSWORD: app_passwd
-      SPRING_PROFILES_ACTIVE: prod
     networks:
       - backend
-    # не прокидываем порт наружу — контакты только через nginx
-    # (если хотите обойтись без nginx, раскомментируйте строку ниже)
-    # ports:
-    #   - "8080:8080"
+    # порт не пробрасываем — всё через nginx
 
   nginx:
     image: nginx:stable-alpine
@@ -50,7 +46,6 @@ services:
       - app
     ports:
       - "80:80"
-      - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     networks:

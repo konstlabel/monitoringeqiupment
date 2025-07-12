@@ -23,36 +23,36 @@ public class EquipmentController {
     public PagedResponse<EquipmentResponse> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "30") int size) {
+
         return equipmentService.getAll(page, size);
     }
 
     @GetMapping("/{id}")
     public EquipmentResponse getById(@PathVariable Long id) {
+
         return equipmentService.getById(id);
     }
 
     @PostMapping
-    public ResponseEntity<EquipmentResponse> create(
-            @Valid @RequestBody CreateEquipmentRequest req,
+    public ResponseEntity<EquipmentResponse> create(@Valid @RequestBody CreateEquipmentRequest createRequest,
             @CurrentUser UserPrincipal currentUser) {
-        EquipmentResponse dto = equipmentService.create(req, currentUser);
+
+        EquipmentResponse dto = equipmentService.create(createRequest, currentUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
     @PutMapping("/{id}")
-    public EquipmentResponse update(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateEquipmentRequest req,
+    public EquipmentResponse update(@Valid @RequestBody UpdateEquipmentRequest updateRequest,
             @CurrentUser UserPrincipal currentUser) {
-        req.setId(id);
-        return equipmentService.update(req, currentUser);
+
+        return equipmentService.update(updateRequest, currentUser);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(
-            @PathVariable Long id,
+    public void delete(@PathVariable Long id,
             @CurrentUser UserPrincipal currentUser) {
+
         equipmentService.delete(id, currentUser);
     }
 
@@ -61,6 +61,7 @@ public class EquipmentController {
             @PathVariable String username,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "30") int size) {
+
         return equipmentService.getByUser(username, page, size);
     }
 }
