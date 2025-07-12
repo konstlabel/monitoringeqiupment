@@ -47,6 +47,9 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(e -> e.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+//                .authorizeHttpRequests(auth -> auth
+//                        .anyRequest().permitAll()
+//                );
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
@@ -69,4 +72,3 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
-
