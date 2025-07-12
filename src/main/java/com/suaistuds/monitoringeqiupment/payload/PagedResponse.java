@@ -1,6 +1,5 @@
 package com.suaistuds.monitoringeqiupment.payload;
 
-
 import lombok.Data;
 
 import java.util.ArrayList;

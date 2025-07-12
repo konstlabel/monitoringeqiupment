@@ -5,7 +5,6 @@ import com.suaistuds.monitoringeqiupment.payload.JwtAuthenticationResponse;
 import com.suaistuds.monitoringeqiupment.payload.user.LoginRequest;
 import com.suaistuds.monitoringeqiupment.payload.user.SignUpRequest;
 import com.suaistuds.monitoringeqiupment.security.JwtTokenProvider;
-import com.suaistuds.monitoringeqiupment.security.UserPrincipal;
 import com.suaistuds.monitoringeqiupment.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

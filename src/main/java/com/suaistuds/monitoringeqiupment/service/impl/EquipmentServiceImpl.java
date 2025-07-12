@@ -1,6 +1,5 @@
 package com.suaistuds.monitoringeqiupment.service.impl;
 
-
 import com.suaistuds.monitoringeqiupment.exception.ResourceNotFoundException;
 import com.suaistuds.monitoringeqiupment.exception.UnauthorizedException;
 import com.suaistuds.monitoringeqiupment.model.directory.StatusEquipment;

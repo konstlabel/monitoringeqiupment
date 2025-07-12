@@ -1,9 +1,6 @@
 package com.suaistuds.monitoringeqiupment.payload.History;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.suaistuds.monitoringeqiupment.model.directory.StatusHistory;
-import com.suaistuds.monitoringeqiupment.model.entity.Equipment;
-import com.suaistuds.monitoringeqiupment.model.entity.User;
 import com.suaistuds.monitoringeqiupment.payload.audit.UserDateAuditPayload;
 import lombok.*;
 

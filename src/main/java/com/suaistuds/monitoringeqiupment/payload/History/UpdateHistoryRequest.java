@@ -1,9 +1,5 @@
 package com.suaistuds.monitoringeqiupment.payload.History;
 
-import com.suaistuds.monitoringeqiupment.model.directory.StatusHistory;
-import com.suaistuds.monitoringeqiupment.model.entity.Equipment;
-import com.suaistuds.monitoringeqiupment.model.entity.User;
-import com.suaistuds.monitoringeqiupment.model.enums.StatusHistoryName;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

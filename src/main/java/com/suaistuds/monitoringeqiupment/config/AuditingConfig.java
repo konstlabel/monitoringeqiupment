@@ -1,4 +1,4 @@
-package com.suaistuds.monitoringeqiupment;
+package com.suaistuds.monitoringeqiupment.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
