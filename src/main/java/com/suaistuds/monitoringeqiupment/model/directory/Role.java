@@ -14,16 +14,33 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+/**
+ * Сущность роли пользователя в системе.
+ *
+ * <p>Соответствует таблице {@code role}.
+ * Хранит идентификатор и наименование роли из перечисления {@link RoleName}.</p>
+ *
+ * @since 2025-07-13
+ */
 @Entity
 @Data
 @NoArgsConstructor
 @Table(name = "role")
 public class Role {
 
+    /**
+     * Уникальный идентификатор записи.
+     * <p>Генерируется базой данных автоматически.</p>
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Наименование роли.
+     * <p>Хранится как строковое значение перечисления {@link RoleName}.
+     * Является натуральным идентификатором записи.</p>
+     */
     @Enumerated(EnumType.STRING)
     @NaturalId
     @Column(name = "name")
