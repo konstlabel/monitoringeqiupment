@@ -47,17 +47,28 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(e -> e.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-//                .authorizeHttpRequests(auth -> auth
-//                        .anyRequest().permitAll()
-//                );
                 .authorizeHttpRequests(auth -> auth
+
+                        // 1) всё preflight’ы (OPTIONS) — без авторизации
+                        .requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
+
+                        // 2) авторизация: signup/signin — без авторизации
                         .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
+
+                        // 3) проверка доступности username/email — без авторизации
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/users/checkUsernameAvailability",
+                                "/api/users/checkEmailAvailability"
+                        ).permitAll()
+
+                        // 4) публичный профиль по username — без авторизации
+                        .requestMatchers(HttpMethod.GET, "/api/users/*").permitAll()
+
+                        // 5) всё остальное требует JWT
                         .anyRequest().authenticated()
                 );
 
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 

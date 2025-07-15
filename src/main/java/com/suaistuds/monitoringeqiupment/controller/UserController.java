@@ -1,90 +1,123 @@
 package com.suaistuds.monitoringeqiupment.controller;
 
-import com.suaistuds.monitoringeqiupment.payload.user.UserIdentityAvailability;
-import com.suaistuds.monitoringeqiupment.payload.user.UserProfile;
-import com.suaistuds.monitoringeqiupment.payload.user.UserSummary;
-import com.suaistuds.monitoringeqiupment.payload.user.UserUpdateRequest;
+import com.suaistuds.monitoringeqiupment.payload.PagedResponse;
+import com.suaistuds.monitoringeqiupment.payload.user.*;
 import com.suaistuds.monitoringeqiupment.service.UserService;
 import com.suaistuds.monitoringeqiupment.security.CurrentUser;
 import com.suaistuds.monitoringeqiupment.security.UserPrincipal;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
-    @Autowired private UserService userService;
+    @Autowired
+    private UserService userService;
+
+    // Основные операции
+    @GetMapping
+    public PagedResponse<UserProfile> getAllUsers(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "30") @Min(1) @Max(100) int size) {
+        return userService.getAll(page, size);
+    }
 
     @GetMapping("/me")
-    public UserSummary getCurrent(@CurrentUser UserPrincipal currentUser) {
-
+    public UserSummary getCurrentUser(@CurrentUser UserPrincipal currentUser) {
         return userService.getCurrentUser(currentUser);
     }
 
-    @GetMapping("/checkUsernameAvailability")
-    public UserIdentityAvailability checkUsername(@RequestParam String username) {
-
-        return userService.checkUsernameAvailability(username);
+    @GetMapping("/id/{userId}")
+    public UserProfile getUserById(@PathVariable Long userId) {
+        return userService.getUserById(userId);
     }
 
-    @GetMapping("/checkEmailAvailability")
-    public UserIdentityAvailability checkEmail(@RequestParam String email) {
-
-        return userService.checkEmailAvailability(email);
+    @GetMapping("/username/{username}")
+    public UserProfile getUserByUsername(@PathVariable String username) {
+        return userService.getUserByUsername(username);
     }
 
-    @GetMapping("/{username}")
-    public UserProfile getProfile(@PathVariable String username) {
+    @GetMapping("/email/{email}")
+    public UserProfile getUserByEmail(@PathVariable String email) {
+        return userService.getUserByEmail(email);
+    }
 
+    @GetMapping("/{username}/profile")
+    public UserProfile getUserProfile(@PathVariable String username) {
         return userService.getUserProfile(username);
     }
 
+    // Проверка доступности
+    @GetMapping("/check/username")
+    public UserIdentityAvailability checkUsernameAvailability(@RequestParam String username) {
+        return userService.checkUsernameAvailability(username);
+    }
+
+    @GetMapping("/check/email")
+    public UserIdentityAvailability checkEmailAvailability(@RequestParam String email) {
+        return userService.checkEmailAvailability(email);
+    }
+
+    // CRUD операции
+    @PostMapping
+    public ResponseEntity<UserSummary> createUser(@Valid @RequestBody SignUpRequest signUpRequest) {
+        UserSummary userSummary = userService.create(signUpRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(userSummary);
+    }
+
     @PutMapping("/{username}")
-    public UserSummary update(
+    public UserSummary updateUser(
             @PathVariable String username,
             @Valid @RequestBody UserUpdateRequest updateRequest,
             @CurrentUser UserPrincipal currentUser) {
-
         return userService.update(username, updateRequest, currentUser);
     }
 
     @DeleteMapping("/{username}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(
+    public void deleteUser(
             @PathVariable String username,
             @CurrentUser UserPrincipal currentUser) {
-
         userService.delete(username, currentUser);
     }
 
-    @PutMapping("/{username}/role/admin")
+    // Управление ролями
+    @PutMapping("/{username}/admin")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void giveAdmin(@PathVariable String username) {
-
+    public void grantAdminRole(@PathVariable String username) {
         userService.giveAdmin(username);
     }
 
-    @DeleteMapping("/{username}/role/admin")
+    @DeleteMapping("/{username}/admin")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeAdmin(@PathVariable String username) {
-
+    public void revokeAdminRole(@PathVariable String username) {
         userService.removeAdmin(username);
     }
 
-    @PutMapping("/{username}/role/studio")
+    @PutMapping("/{username}/studio")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void giveStudio(@PathVariable String username) {
-
+    public void grantStudioRole(@PathVariable String username) {
         userService.giveStudio(username);
     }
 
-    @DeleteMapping("/{username}/role/studio")
+    @DeleteMapping("/{username}/studio")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeStudio(@PathVariable String username) {
-
+    public void revokeStudioRole(@PathVariable String username) {
         userService.removeStudio(username);
+    }
+
+    // Фильтрация
+    @GetMapping("/role/{roleId}")
+    public PagedResponse<UserProfile> getUsersByRole(
+            @PathVariable Long roleId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "30") int size) {
+        return userService.getUsersByRole(roleId, page, size);
     }
 }
