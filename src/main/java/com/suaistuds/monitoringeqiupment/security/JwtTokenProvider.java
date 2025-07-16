@@ -14,9 +14,22 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
 
-
+/**
+ * Компонент для работы с JWT токенами.
+ * Обеспечивает генерацию, валидацию и парсинг JWT токенов.
+ *
+ * <p>Использует библиотеку JJWT для работы с токенами.
+ * Конфигурируется через параметры приложения:
+ * <ul>
+ *   <li>app.jwtSecret - секретный ключ в Base64</li>
+ *   <li>app.jwtExpirationInMs - срок действия токена в миллисекундах</li>
+ * </ul>
+ *
+ * @since 2025-07-13
+ */
 @Component
 public class JwtTokenProvider {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtTokenProvider.class);
 
     @Value("${app.jwtSecret}")
@@ -27,12 +40,23 @@ public class JwtTokenProvider {
 
     private Key key;
 
+    /**
+     * Инициализирует компонент после создания бина.
+     * Декодирует секретный ключ из Base64 и создает Key для подписи.
+     */
     @PostConstruct
     public void init() {
         byte[] secretBytes = Decoders.BASE64.decode(jwtSecretBase64);
         this.key = Keys.hmacShaKeyFor(secretBytes);
     }
 
+    /**
+     * Генерирует JWT токен на основе аутентификации пользователя.
+     *
+     * @param authentication данные аутентификации пользователя
+     * @return сгенерированный JWT токен
+     * @throws ClassCastException если principal не является UserPrincipal
+     */
     public String generateToken(Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         Date now    = new Date();
@@ -46,6 +70,13 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+    /**
+     * Извлекает идентификатор пользователя из JWT токена.
+     *
+     * @param token JWT токен
+     * @return идентификатор пользователя
+     * @throws JwtException если токен невалиден
+     */
     public Long getUserIdFromJWT(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(key)
@@ -55,6 +86,12 @@ public class JwtTokenProvider {
         return Long.valueOf(claims.getSubject());
     }
 
+    /**
+     * Проверяет валидность JWT токена.
+     *
+     * @param token JWT токен для проверки
+     * @return true если токен валиден, false в противном случае
+     */
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()
@@ -62,10 +99,9 @@ public class JwtTokenProvider {
                     .build()
                     .parseClaimsJws(token);
             return true;
-        } catch (SignatureException | MalformedJwtException | UnsupportedJwtException |
-                 ExpiredJwtException | IllegalArgumentException ex) {
-            LOGGER.error("JWT validation error", ex);
+        } catch (Exception ex) {
+            LOGGER.error("JWT validation error: {}", ex.getMessage(), ex);
+            return false;
         }
-        return false;
     }
 }

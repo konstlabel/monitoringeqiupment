@@ -153,12 +153,22 @@ public class UserServiceImpl implements UserService {
     public UserSummary update(String username, UserUpdateRequest updateRequest, UserPrincipal currentUser) {
 
         User user = userRepository.getUserByName(username);
+
         boolean self = user.getId().equals(currentUser.getId());
         boolean admin = currentUser.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals(RoleName.admin.name()));
+
         if (!self && !admin) {
             throw new UnauthorizedException("You don't have permission to update this user");
         }
+
+        if (userRepository.existsByUsername(updateRequest.getUsername())) {
+            throw new BadRequestException("Username is already taken");
+        }
+        if (userRepository.existsByEmail(updateRequest.getEmail())) {
+            throw new BadRequestException("Email is already taken");
+        }
+
         user.setUsername(updateRequest.getUsername());
         user.setEmail(updateRequest.getEmail());
         user.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
@@ -170,12 +180,15 @@ public class UserServiceImpl implements UserService {
     public void delete(String username, UserPrincipal currentUser) {
 
         User user = userRepository.getUserByName(username);
+
         boolean self = user.getId().equals(currentUser.getId());
         boolean admin = currentUser.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals(RoleName.admin.name()));
+
         if (!self && !admin) {
             throw new UnauthorizedException("You don't have permission to delete this user");
         }
+
         userRepository.delete(user);
     }
 

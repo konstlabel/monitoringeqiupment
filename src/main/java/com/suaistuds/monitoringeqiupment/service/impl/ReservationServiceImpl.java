@@ -51,6 +51,7 @@ public class ReservationServiceImpl implements ReservationService {
     @Autowired private ReservationRepository reservationRepository;
     @Autowired private EquipmentRepository equipmentRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private StatusEquipmentRepository statusEquipmentRepository;
     @Autowired private StatusReservationRepository statusReservationRepository;
     @Autowired private StatusHistoryRepository statusHistoryRepository;
     @Autowired private HistoryRepository historyRepository;
@@ -226,12 +227,14 @@ public class ReservationServiceImpl implements ReservationService {
 
         Reservation reservation = new Reservation();
 
-        if (this.checkEquipmentStatus(createRequest.getEquipmentId(), Optional.empty())) {
+        Equipment equipment = equipmentRepository.findById(createRequest.getEquipmentId())
+                .orElseThrow(() -> new ResourceNotFoundException("Equipment", "equipmentId", createRequest.getEquipmentId()));
+
+        if (this.checkEquipmentStatus(equipment, Optional.empty())) {
             throw new ResourceAlreadyExistsException("Reservation", "equipmentId", createRequest.getEquipmentId());
         }
 
-        reservation.setEquipment(equipmentRepository.findById(createRequest.getEquipmentId())
-                .orElseThrow(() -> new ResourceNotFoundException("Equipment", "id", createRequest.getEquipmentId())));
+        reservation.setEquipment(equipment);
 
         reservation.setUser(userRepository.getUserByName(userRepository.findById(createRequest.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", createRequest.getUserId())).getUsername()));
@@ -250,12 +253,16 @@ public class ReservationServiceImpl implements ReservationService {
 
         Reservation saved = reservationRepository.save(reservation);
 
+        equipment.setStatus(statusEquipmentRepository.findById(2L)
+                .orElseThrow(() -> new ResourceNotFoundException("StatusEquipment", "id", 2L)));
+
         return toDto(saved);
     }
 
     @Override
     @Transactional
     public ReservationResponse update(UpdateReservationRequest updateRequest, UserPrincipal currentUser) {
+
         if (isNotStudioOrAdmin(currentUser)) {
             throw new UnauthorizedException(NO_PERM);
         }
@@ -263,9 +270,15 @@ public class ReservationServiceImpl implements ReservationService {
         Reservation reservation = reservationRepository.findById(updateRequest.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Reservation", "id", updateRequest.getId()));
 
-        if (this.checkEquipmentStatus(updateRequest.getEquipmentId(), Optional.of(reservation.getEquipment()))) {
+        Equipment equipment = equipmentRepository.findById(updateRequest.getEquipmentId())
+                .orElseThrow(() -> new ResourceNotFoundException("Equipment", "equipmentId", updateRequest.getEquipmentId()));
+
+        if (this.checkEquipmentStatus(equipment, Optional.of(reservation.getEquipment()))) {
             throw new ResourceAlreadyExistsException("Reservation", "equipmentId", updateRequest.getEquipmentId());
         }
+
+        reservation.getEquipment().setStatus(statusEquipmentRepository.findById(1L)
+                .orElseThrow(() -> new ResourceNotFoundException("StatusEquipment", "id", 1L)));
 
         StatusReservation newStatus = statusReservationRepository.findById(updateRequest.getStatusReservationId())
                 .orElseThrow(() -> new ResourceNotFoundException("StatusReservation", "id", updateRequest.getStatusReservationId()));
@@ -292,7 +305,7 @@ public class ReservationServiceImpl implements ReservationService {
                     .userId(reservation.getUser().getId())
                     .responsibleId(currentUser.getId())
                     .statusHistoryId(statusHistory.getId())
-                    .date(LocalDateTime.now())
+                    .date(reservation.getEndDate())
                     .build();
 
             historyService.create(historyReq, currentUser);
@@ -322,10 +335,14 @@ public class ReservationServiceImpl implements ReservationService {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Reservation", "id", id));
 
+        reservation.getEquipment().setStatus(statusEquipmentRepository.findById(1L)
+                .orElseThrow(() -> new ResourceNotFoundException("StatusEquipment", "id", 1L)));
+
         reservationRepository.delete(reservation);
     }
 
     private PagedResponse<ReservationResponse> toPagedResponse(Page<Reservation> page) {
+
         List<ReservationResponse> dtos = page.getContent().stream()
                 .map(this::toDto)
                 .toList();
@@ -335,6 +352,7 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     private boolean isNotStudioOrAdmin(UserPrincipal currentUser) {
+
         boolean studio = currentUser.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals(RoleName.studio.name()));
         boolean admin = currentUser.getAuthorities().stream()
@@ -343,23 +361,18 @@ public class ReservationServiceImpl implements ReservationService {
         return !studio && !admin;
     }
 
-    private boolean checkEquipmentStatus(Long equipmentId, Optional<Equipment> e1) {
+    private boolean checkEquipmentStatus(Equipment e2, Optional<Equipment> e1) {
 
-        Optional<Equipment> e2 = equipmentRepository.findById(equipmentId);
-
-        if (e1.isPresent() && e2.isPresent() && e1.get().equals(e2.get())) {
+        if (e1.isPresent() && e1.get().equals(e2)) {
                 return true;
         }
 
-        if (e2.isPresent()) {
-            StatusEquipment status = e2.get().getStatus();
-            return status.getName() == StatusEquipmentName.available;
-        }
-
-        return false;
+        StatusEquipment status = e2.getStatus();
+        return status.getName() == StatusEquipmentName.available;
     }
     
     private ReservationResponse toDto(Reservation reservation) {
+
         ReservationResponse dto = modelMapper.map(reservation, ReservationResponse.class);
         dto.setEquipmentId(reservation.getEquipment().getId());
         dto.setUserId(reservation.getUser().getId());

@@ -1,4 +1,10 @@
--- 1. Очистка старых таблиц
+-- ============================================================================
+-- SCHEMA.SQL: Инициализация базы данных для системы бронирования оборудования
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- 1. Очистка старых таблиц (если они существуют, для повторной инициализации)
+-- ----------------------------------------------------------------------------
 DROP TABLE IF EXISTS history;
 DROP TABLE IF EXISTS reservation;
 DROP TABLE IF EXISTS equipment;
@@ -9,9 +15,12 @@ DROP TABLE IF EXISTS status;
 DROP TABLE IF EXISTS role;
 DROP TABLE IF EXISTS type;
 
--- 2. Справочники
+-- ----------------------------------------------------------------------------
+-- 2. Справочные таблицы (категории, статусы, роли)
+-- ----------------------------------------------------------------------------
 
--- 2.1. Статусы оборудования
+-- 2.1. Таблица статусов оборудования
+-- Возможные значения: available, reserved, issued
 CREATE TABLE status (
   id   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   name VARCHAR(20)       NOT NULL,
@@ -19,12 +28,14 @@ CREATE TABLE status (
   UNIQUE KEY ux_status_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Предустановленные статусы оборудования
 INSERT INTO status (name) VALUES
-  ('available'),
-  ('reserved'),
-  ('issued');
+  ('available'),        -- доступно
+  ('reserved'),         -- зарезервировано
+  ('issued');           -- выдано
 
--- 2.2. Статусы бронирования
+-- 2.2. Таблица статусов бронирования
+-- Описывает состояние активных бронирований
 CREATE TABLE status_reservation (
   id   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   name VARCHAR(20)       NOT NULL,
@@ -32,15 +43,18 @@ CREATE TABLE status_reservation (
   UNIQUE KEY ux_status_reservation_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Предустановленные статусы бронирования
 INSERT INTO status_reservation (name) VALUES
-  ('pending'),
-  ('confirmed'),
-  ('cancelled'),
-  ('rejected'),
-  ('returned'),
-  ('not_returned');
+  ('pending'),          -- ожидает подтверждения
+  ('confirmed'),        -- подтверждено
+  ('cancelled'),        -- отменено
+  ('issued'),           -- выдано
+  ('rejected'),         -- отклонено
+  ('returned'),         -- возвращено
+  ('not_returned');     -- не возвращено
 
--- 2.3. Статусы истории
+-- 2.3. Таблица статусов истории
+-- Используется только для финализированных записей истории
 CREATE TABLE status_history (
   id   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   name VARCHAR(20)       NOT NULL,
@@ -48,13 +62,15 @@ CREATE TABLE status_history (
   UNIQUE KEY ux_status_history_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Предустановленные статусы истории
 INSERT INTO status_history (name) VALUES
-  ('cancelled'),
-  ('rejected'),
-  ('returned'),
-  ('not_returned');
+  ('cancelled'),        -- отменено
+  ('rejected'),         -- отклонено
+  ('returned'),         -- возвращено
+  ('not_returned');     -- не возвращено
 
--- 2.4. Роли пользователей
+-- 2.4. Таблица ролей пользователей
+-- Используется для авторизации и разграничения доступа
 CREATE TABLE role (
   id   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   name VARCHAR(20)       NOT NULL,
@@ -62,12 +78,14 @@ CREATE TABLE role (
   UNIQUE KEY ux_role_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Предустановленные роли
 INSERT INTO role (name) VALUES
-  ('admin'),
-  ('studio'),
-  ('user');
+  ('admin'),            -- админ
+  ('studio'),           -- студия
+  ('user');             -- пользователь
 
--- 2.5. Типы оборудования
+-- 2.5. Таблица типов оборудования
+-- Категории техники, доступной для бронирования
 CREATE TABLE type (
   id   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   name VARCHAR(50)       NOT NULL,
@@ -75,20 +93,26 @@ CREATE TABLE type (
   UNIQUE KEY ux_type_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Предустановленные типы оборудования
 INSERT INTO type (name) VALUES
-  ('camera'),
-  ('lens'),
-  ('microphone'),
-  ('tripod'),
-  ('light'),
-  ('reflector'),
-  ('audio_recorder'),
-  ('headphones'),
-  ('stabilizer'),
-  ('backdrop');
+  ('camera'),           -- камера
+  ('lens'),             -- объектив
+  ('microphone'),       -- микрофон
+  ('tripod'),           -- штатив
+  ('light'),            -- свет
+  ('reflector'),        -- отражатель света
+  ('audio_recorder'),   -- диктофон
+  ('headphones'),       -- наушники
+  ('stabilizer'),       -- стабилизатор
+  ('backdrop');         -- фон
 
--- 3. Основные сущности
 
+-- ----------------------------------------------------------------------------
+-- 3. Основные сущности (оборудование и пользователи)
+-- ----------------------------------------------------------------------------
+
+-- Таблица оборудования
+-- Хранит технические единицы: наименование, серийный номер, статус и тип
 CREATE TABLE equipment (
   id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   name          VARCHAR(100)       NOT NULL,
@@ -107,9 +131,8 @@ CREATE TABLE equipment (
   CONSTRAINT fk_equipment_type   FOREIGN KEY (type_id)   REFERENCES type   (id) ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Если у вас есть audit-поля у equipment (расширяет DateAudit),
--- добавьте сюда created_at, updated_at аналогично таблице user.
-
+-- Таблица пользователей
+-- Хранит информацию об учетных записях и их ролях
 CREATE TABLE `user` (
   id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   username   VARCHAR(50)       NOT NULL,
@@ -126,7 +149,10 @@ CREATE TABLE `user` (
   CONSTRAINT fk_user_role FOREIGN KEY (role_id) REFERENCES role (id) ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 4. Активные бронирования
+
+-- ----------------------------------------------------------------------------
+-- 4. Таблица активных бронирований
+-- ----------------------------------------------------------------------------
 
 CREATE TABLE reservation (
   id                    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -146,12 +172,15 @@ CREATE TABLE reservation (
   KEY fk_res_status_reservation (status_reservation_id),
   KEY fk_res_responsible        (responsible_id),
   CONSTRAINT fk_res_equipment          FOREIGN KEY (equipment_id)           REFERENCES equipment          (id) ON UPDATE CASCADE ON DELETE RESTRICT,
-  CONSTRAINT fk_res_user               FOREIGN KEY (user_id)                REFERENCES `user`               (id) ON UPDATE CASCADE ON DELETE RESTRICT,
-  CONSTRAINT fk_res_status_reservation FOREIGN KEY (status_reservation_id) REFERENCES status_reservation (id) ON UPDATE CASCADE ON DELETE RESTRICT,
-  CONSTRAINT fk_res_responsible        FOREIGN KEY (responsible_id)        REFERENCES `user`               (id) ON UPDATE CASCADE ON DELETE RESTRICT
+  CONSTRAINT fk_res_user               FOREIGN KEY (user_id)                REFERENCES `user`             (id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT fk_res_status_reservation FOREIGN KEY (status_reservation_id)  REFERENCES status_reservation (id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT fk_res_responsible        FOREIGN KEY (responsible_id)         REFERENCES `user`             (id) ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 5. История финализированных бронирований
+
+-- ----------------------------------------------------------------------------
+-- 5. Таблица истории завершенных бронирований
+-- ----------------------------------------------------------------------------
 
 CREATE TABLE history (
   id                BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -170,13 +199,16 @@ CREATE TABLE history (
   KEY fk_hist_responsible    (responsible_id),
   KEY fk_hist_status_history (status_history_id),
   CONSTRAINT fk_hist_equipment      FOREIGN KEY (equipment_id)      REFERENCES equipment      (id) ON UPDATE CASCADE ON DELETE RESTRICT,
-  CONSTRAINT fk_hist_user           FOREIGN KEY (user_id)           REFERENCES `user`           (id) ON UPDATE CASCADE ON DELETE RESTRICT,
-  CONSTRAINT fk_hist_responsible    FOREIGN KEY (responsible_id)    REFERENCES `user`           (id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT fk_hist_user           FOREIGN KEY (user_id)           REFERENCES `user`         (id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT fk_hist_responsible    FOREIGN KEY (responsible_id)    REFERENCES `user`         (id) ON UPDATE CASCADE ON DELETE RESTRICT,
   CONSTRAINT fk_hist_status_history FOREIGN KEY (status_history_id) REFERENCES status_history (id) ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 6. Создать дефолтного админа (роль admin должна иметь id = 1)
--- 6.1. Замените здесь хэш пароля на свой (например, сгенерируйте BCrypt в вашем приложении)
+
+-- ----------------------------------------------------------------------------
+-- 6. Создание дефолтного администратора (роль admin должна быть с id = 1)
+-- ----------------------------------------------------------------------------
+
 INSERT INTO `user` (username, email, password, role_id)
 VALUES (
   'superadmin',

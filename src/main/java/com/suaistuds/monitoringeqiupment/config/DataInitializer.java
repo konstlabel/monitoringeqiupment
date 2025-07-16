@@ -12,9 +12,30 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.EnumSet;
 
+/**
+ * Конфигурационный класс для инициализации базовых данных при запуске приложения.
+ * Создает системные роли и администратора по умолчанию, если они отсутствуют.
+ *
+ * @since 2025-07-13
+ */
 @Configuration
 public class DataInitializer {
 
+    /**
+     * Инициализирует базовые данные при запуске приложения:
+     * <ol>
+     *   <li>Создает все системные роли из перечисления {@link RoleName}, если они отсутствуют</li>
+     *   <li>Создает администратора по умолчанию (логин: admin, пароль: admin123), если он отсутствует</li>
+     * </ol>
+     *
+     * @param roleRepo репозиторий для работы с ролями
+     * @param userRepo репозиторий для работы с пользователями
+     * @param encoder кодировщик паролей
+     * @return CommandLineRunner для выполнения инициализации
+     *
+     * @implNote При первом запуске выводит в консоль учетные данные администратора.
+     *           В продакшн-среде следует изменить пароль по умолчанию!
+     */
     @Bean
     public CommandLineRunner initDefaultAdmin(
             RoleRepository roleRepo,
