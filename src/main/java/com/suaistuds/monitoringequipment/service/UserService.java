@@ -68,9 +68,10 @@ public interface UserService {
      * @param roleId идентификатор роли
      * @param page номер страницы
      * @param size количество элементов на странице
+     * @param currentUser текущий аутентифицированный пользователь
      * @return страница с профилями пользователей в формате {@link PagedResponse}
      */
-    PagedResponse<UserProfile> getUsersByRole(Long roleId, int page, int size);
+    PagedResponse<UserProfile> getUsersByRole(Long roleId, int page, int size, UserPrincipal currentUser);
 
     /**
      * Проверяет существование пользователя с указанным именем.
@@ -142,27 +143,31 @@ public interface UserService {
      * Назначает пользователю права администратора.
      *
      * @param username имя пользователя
+     * @param currentUser текущий аутентифицированный пользователь
      */
-    void giveAdmin(String username);
+    void giveAdmin(String username, UserPrincipal currentUser);
 
     /**
      * Отзывает права администратора у пользователя.
      *
      * @param username имя пользователя
+     * @param currentUser текущий аутентифицированный пользователь
      */
-    void removeAdmin(String username);
+    void removeAdmin(String username, UserPrincipal currentUser);
 
     /**
      * Назначает пользователю права студии.
      *
      * @param username имя пользователя
+     * @param currentUser текущий аутентифицированный пользователь
      */
-    void giveStudio(String username);
+    void giveStudio(String username, UserPrincipal currentUser);
 
     /**
      * Отзывает права студии у пользователя.
      *
      * @param username имя пользователя
+     * @param currentUser текущий аутентифицированный пользователь
      */
-    void removeStudio(String username);
+    void removeStudio(String username, UserPrincipal currentUser);
 }

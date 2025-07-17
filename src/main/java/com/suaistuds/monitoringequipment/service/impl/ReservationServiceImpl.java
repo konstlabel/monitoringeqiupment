@@ -2,11 +2,13 @@ package com.suaistuds.monitoringequipment.service.impl;
 
 import com.suaistuds.monitoringequipment.exception.ResourceAlreadyExistsException;
 import com.suaistuds.monitoringequipment.exception.ResourceNotFoundException;
+import com.suaistuds.monitoringequipment.exception.UnauthorizedException;
 import com.suaistuds.monitoringequipment.model.directory.StatusHistory;
 import com.suaistuds.monitoringequipment.model.directory.StatusReservation;
 import com.suaistuds.monitoringequipment.model.entity.Equipment;
 import com.suaistuds.monitoringequipment.model.entity.Reservation;
 import com.suaistuds.monitoringequipment.model.entity.User;
+import com.suaistuds.monitoringequipment.model.enums.RoleName;
 import com.suaistuds.monitoringequipment.model.enums.StatusEquipmentName;
 import com.suaistuds.monitoringequipment.model.enums.StatusHistoryName;
 import com.suaistuds.monitoringequipment.model.enums.StatusReservationName;
@@ -439,9 +441,12 @@ public class ReservationServiceImpl implements ReservationService {
      * @throws ResourceAlreadyExistsException если есть пересечение с другими резервациями
      */
     @Override
-    @PreAuthorize("hasAnyRole('studio','admin')")
     @Transactional
     public ReservationResponse update(UpdateReservationRequest updateRequest, UserPrincipal currentUser) {
+
+        if (isNotStudioOrAdmin(currentUser)) {
+            throw new UnauthorizedException(NO_PERM);
+        }
 
         Reservation reservation = reservationRepository.findById(updateRequest.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Reservation", "id", updateRequest.getId()));
@@ -537,9 +542,12 @@ public class ReservationServiceImpl implements ReservationService {
      * @throws ResourceNotFoundException если резервация не найдена
      */
     @Override
-    @PreAuthorize("hasAnyRole('studio','admin')")
     @Transactional
     public void delete(Long id, UserPrincipal currentUser) {
+
+        if (isNotStudioOrAdmin(currentUser)) {
+            throw new UnauthorizedException(NO_PERM);
+        }
 
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Reservation", "id", id));
@@ -549,6 +557,22 @@ public class ReservationServiceImpl implements ReservationService {
         equipmentRepository.save(reservation.getEquipment());
         reservationRepository.delete(reservation);
     }
+
+    /**
+     * Проверяет, имеет ли пользователь права Studio или Admin.
+     *
+     * @param currentUser текущий аутентифицированный пользователь
+     * @return true если пользователь не имеет прав Studio или Admin, иначе false
+     */
+    private boolean isNotStudioOrAdmin(UserPrincipal currentUser) {
+        boolean studio = currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(RoleName.studio.name()));
+        boolean admin = currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(RoleName.admin.name()));
+
+        return !studio && !admin;
+    }
+
 
     /**
      * Преобразует страницу резерваций в PagedResponse.

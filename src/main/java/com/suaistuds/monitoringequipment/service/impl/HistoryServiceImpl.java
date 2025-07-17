@@ -288,9 +288,12 @@ public class HistoryServiceImpl implements HistoryService {
      * @throws ResourceNotFoundException если оборудование, пользователи или статус не найдены
      */
     @Override
-    @PreAuthorize("hasAnyRole('studio','admin')")
     @Transactional
     public HistoryResponse create(CreateHistoryRequest createRequest, UserPrincipal currentUser) {
+
+        if (isNotStudioOrAdmin(currentUser)) {
+            throw new UnauthorizedException(NO_PERM);
+        }
 
         if (isNotStudioOrAdmin(currentUser)) {
             throw new UnauthorizedException(NO_PERM);
@@ -341,7 +344,6 @@ public class HistoryServiceImpl implements HistoryService {
      * @throws ResourceNotFoundException если запись, оборудование, пользователи или статус не найдены
      */
     @Override
-    @PreAuthorize("hasAnyRole('studio','admin')")
     @Transactional
     public HistoryResponse update(UpdateHistoryRequest updateRequest, UserPrincipal currentUser) {
 
@@ -394,7 +396,6 @@ public class HistoryServiceImpl implements HistoryService {
      * @throws ResourceNotFoundException если запись не найдена
      */
     @Override
-    @PreAuthorize("hasAnyRole('studio','admin')")
     @Transactional
     public void delete(Long id, UserPrincipal currentUser) {
 

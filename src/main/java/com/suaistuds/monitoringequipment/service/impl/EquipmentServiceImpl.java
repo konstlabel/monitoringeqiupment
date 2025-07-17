@@ -223,9 +223,12 @@ public class EquipmentServiceImpl implements EquipmentService {
      * @throws ResourceNotFoundException если статус или тип не найдены
      */
     @Override
-    @PreAuthorize("hasAnyRole('studio','admin')")
     @Transactional
     public EquipmentResponse create(CreateEquipmentRequest createRequest, UserPrincipal currentUser) {
+
+        if (isNotStudioOrAdmin(currentUser)) {
+            throw new UnauthorizedException(NO_PERM);
+        }
 
         if (this.checkSerialNumber(createRequest.getSerialNumber(), Optional.empty())) {
             throw new ResourceAlreadyExistsException("Equipment", "serialNumber", createRequest.getSerialNumber());
@@ -261,9 +264,12 @@ public class EquipmentServiceImpl implements EquipmentService {
      * @throws ResourceAlreadyExistsException если оборудование с таким серийным номером уже существует
      */
     @Override
-    @PreAuthorize("hasAnyRole('studio','admin')")
     @Transactional
     public EquipmentResponse update(UpdateEquipmentRequest updateRequest, UserPrincipal currentUser) {
+
+        if (isNotStudioOrAdmin(currentUser)) {
+            throw new UnauthorizedException(NO_PERM);
+        }
 
         Equipment equipment = equipmentRepository.findById(updateRequest.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Equipment", "id", updateRequest.getId()));
@@ -297,9 +303,12 @@ public class EquipmentServiceImpl implements EquipmentService {
      * @throws ResourceNotFoundException если оборудование не найдено
      */
     @Override
-    @PreAuthorize("hasAnyRole('studio','admin')")
     @Transactional
     public void delete(Long id, UserPrincipal currentUser) {
+
+        if (isNotStudioOrAdmin(currentUser)) {
+            throw new UnauthorizedException(NO_PERM);
+        }
 
         Equipment equipment = equipmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Equipment", "id", id));
@@ -321,20 +330,20 @@ public class EquipmentServiceImpl implements EquipmentService {
                 page.getTotalElements(), page.getTotalPages(), page.isLast());
     }
 
-//    /**
-//     * Проверяет, имеет ли пользователь права Studio или Admin.
-//     *
-//     * @param currentUser текущий аутентифицированный пользователь
-//     * @return true если пользователь не имеет прав Studio или Admin, иначе false
-//     */
-//    private boolean isNotStudioOrAdmin(UserPrincipal currentUser) {
-//        boolean studio = currentUser.getAuthorities().stream()
-//                .anyMatch(a -> a.getAuthority().equals(RoleName.studio.name()));
-//        boolean admin = currentUser.getAuthorities().stream()
-//                .anyMatch(a -> a.getAuthority().equals(RoleName.admin.name()));
-//
-//        return !studio && !admin;
-//    }
+    /**
+     * Проверяет, имеет ли пользователь права Studio или Admin.
+     *
+     * @param currentUser текущий аутентифицированный пользователь
+     * @return true если пользователь не имеет прав Studio или Admin, иначе false
+     */
+    private boolean isNotStudioOrAdmin(UserPrincipal currentUser) {
+        boolean studio = currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(RoleName.studio.name()));
+        boolean admin = currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(RoleName.admin.name()));
+
+        return !studio && !admin;
+    }
 
     /**
      * Проверяет уникальность серийного номера оборудования.

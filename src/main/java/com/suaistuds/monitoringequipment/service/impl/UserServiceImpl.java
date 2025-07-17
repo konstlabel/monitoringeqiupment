@@ -60,6 +60,8 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
+    private static final String NO_PERM     = "You don't have permission to make this operation";
+
     /**
      * Репозиторий для работы с пользователями.
      */
@@ -171,7 +173,11 @@ public class UserServiceImpl implements UserService {
      * @throws ResourceNotFoundException если роль не найдена
      */
     @Override
-    public PagedResponse<UserProfile> getUsersByRole(Long roleId, int page, int size) {
+    public PagedResponse<UserProfile> getUsersByRole(Long roleId, int page, int size, UserPrincipal currentUser) {
+
+        if (isNotAdmin(currentUser)) {
+            throw new UnauthorizedException(NO_PERM);
+        }
 
         AppUtils.validatePageNumberAndSize(page, size);
         Role role = roleRepository.findById(roleId)
@@ -296,10 +302,8 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.getUserByName(username);
 
         boolean self = user.getId().equals(currentUser.getId());
-        boolean admin = currentUser.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(RoleName.admin.name()));
 
-        if (!self && !admin) {
+        if (!self && isNotAdmin(currentUser)) {
             throw new UnauthorizedException("You don't have permission to update this user");
         }
 
@@ -331,10 +335,8 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.getUserByName(username);
 
         boolean self = user.getId().equals(currentUser.getId());
-        boolean admin = currentUser.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(RoleName.admin.name()));
 
-        if (!self && !admin) {
+        if (!self && isNotAdmin(currentUser)) {
             throw new UnauthorizedException("You don't have permission to delete this user");
         }
 
@@ -348,9 +350,12 @@ public class UserServiceImpl implements UserService {
      * @throws AppException если роль администратора не настроена в системе
      */
     @Override
-    @PreAuthorize("hasAnyRole('admin')")
     @Transactional
-    public void giveAdmin(String username) {
+    public void giveAdmin(String username, UserPrincipal currentUser) {
+
+        if (isNotAdmin(currentUser)) {
+            throw new UnauthorizedException(NO_PERM);
+        }
 
         User u = userRepository.getUserByName(username);
         Role admin = roleRepository.findByName(RoleName.admin)
@@ -365,9 +370,12 @@ public class UserServiceImpl implements UserService {
      * @throws AppException если роль пользователя не настроена в системе
      */
     @Override
-    @PreAuthorize("hasAnyRole('admin')")
     @Transactional
-    public void removeAdmin(String username) {
+    public void removeAdmin(String username, UserPrincipal currentUser) {
+
+        if (isNotAdmin(currentUser)) {
+            throw new UnauthorizedException(NO_PERM);
+        }
 
         User u = userRepository.getUserByName(username);
         Role userRole = roleRepository.findByName(RoleName.user)
@@ -382,9 +390,12 @@ public class UserServiceImpl implements UserService {
      * @throws AppException если роль студии не настроена в системе
      */
     @Override
-    @PreAuthorize("hasAnyRole('admin')")
     @Transactional
-    public void giveStudio(String username) {
+    public void giveStudio(String username, UserPrincipal currentUser) {
+
+        if (isNotAdmin(currentUser)) {
+            throw new UnauthorizedException(NO_PERM);
+        }
 
         User u = userRepository.getUserByName(username);
         Role studio = roleRepository.findByName(RoleName.studio)
@@ -399,14 +410,31 @@ public class UserServiceImpl implements UserService {
      * @throws AppException если роль пользователя не настроена в системе
      */
     @Override
-    @PreAuthorize("hasAnyRole('admin')")
     @Transactional
-    public void removeStudio(String username) {
+    public void removeStudio(String username, UserPrincipal currentUser) {
+
+        if (isNotAdmin(currentUser)) {
+            throw new UnauthorizedException(NO_PERM);
+        }
 
         User u = userRepository.getUserByName(username);
         Role userRole = roleRepository.findByName(RoleName.user)
                 .orElseThrow(() -> new AppException("User role not set"));
         u.setRole(userRole);
+    }
+
+
+    /**
+     * Проверяет, имеет ли пользователь права Admin.
+     *
+     * @param currentUser текущий аутентифицированный пользователь
+     * @return true если пользователь не имеет прав Studio или Admin, иначе false
+     */
+    private boolean isNotAdmin(UserPrincipal currentUser) {
+        boolean admin = currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(RoleName.admin.name()));
+
+        return !admin;
     }
 
     /**

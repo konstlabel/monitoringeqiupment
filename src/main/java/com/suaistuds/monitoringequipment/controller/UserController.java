@@ -90,26 +90,30 @@ public class UserController {
     // Управление ролями
     @PutMapping("/{username}/admin")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void grantAdminRole(@PathVariable String username) {
-        userService.giveAdmin(username);
+    public void grantAdminRole(@PathVariable String username,
+                               @CurrentUser UserPrincipal currentUser) {
+        userService.giveAdmin(username, currentUser);
     }
 
     @DeleteMapping("/{username}/admin")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void revokeAdminRole(@PathVariable String username) {
-        userService.removeAdmin(username);
+    public void revokeAdminRole(@PathVariable String username,
+                                @CurrentUser UserPrincipal currentUser) {
+        userService.removeAdmin(username, currentUser);
     }
 
     @PutMapping("/{username}/studio")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void grantStudioRole(@PathVariable String username) {
-        userService.giveStudio(username);
+    public void grantStudioRole(@PathVariable String username,
+                                @CurrentUser UserPrincipal currentUser) {
+        userService.giveStudio(username, currentUser);
     }
 
     @DeleteMapping("/{username}/studio")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void revokeStudioRole(@PathVariable String username) {
-        userService.removeStudio(username);
+    public void revokeStudioRole(@PathVariable String username,
+                                 @CurrentUser UserPrincipal currentUser) {
+        userService.removeStudio(username, currentUser);
     }
 
     // Фильтрация
@@ -117,7 +121,8 @@ public class UserController {
     public PagedResponse<UserProfile> getUsersByRole(
             @PathVariable Long roleId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "30") int size) {
-        return userService.getUsersByRole(roleId, page, size);
+            @RequestParam(defaultValue = "30") int size,
+            @CurrentUser UserPrincipal currentUser) {
+        return userService.getUsersByRole(roleId, page, size, currentUser);
     }
 }
