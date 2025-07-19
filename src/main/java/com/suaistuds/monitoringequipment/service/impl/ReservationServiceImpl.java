@@ -482,25 +482,13 @@ public class ReservationServiceImpl implements ReservationService {
         reservation.setEndDate(updateRequest.getEndDate());
         reservation.setStatusReservation(newStatus);
 
-
-        // Список historyStatuses
-        List<StatusHistoryName> historyStatuses = Arrays.asList(
-                StatusHistoryName.cancelled,
-                StatusHistoryName.rejected,
-                StatusHistoryName.returned,
-                StatusHistoryName.not_returned
-        );
-
-        // Проверка, что статус резервации один из списка historyStatuses
-        if (historyStatuses.stream()
-                .map(StatusHistoryName::name)
-                .collect(Collectors.toSet())
-                .contains(newStatus.getName())) {
+        // Проверка, что статус резервации
+        if (updateRequest.getStatusReservationId() > 3L) {
 
             StatusHistory statusHistory = statusHistoryRepository
-                    .findByName(StatusHistoryName.valueOf(newStatus.getName().name()))
+                    .findById(updateRequest.getStatusReservationId() - 3L)
                     .orElseThrow(() -> new ResourceNotFoundException(
-                            "StatusHistory", "name", newStatus.getName()));
+                            "StatusHistory", "id", updateRequest.getStatusReservationId() - 3L));
 
             CreateHistoryRequest historyReq = CreateHistoryRequest.builder()
                     .equipmentId(reservation.getEquipment().getId())

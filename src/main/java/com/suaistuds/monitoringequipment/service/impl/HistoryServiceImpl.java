@@ -189,7 +189,7 @@ public class HistoryServiceImpl implements HistoryService {
         User responsible = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Responsible", "username", username));
         Pageable pg = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<History> p = historyRepository.findByUser(responsible, pg);
+        Page<History> p = historyRepository.findByResponsible(responsible, pg);
         List<HistoryResponse> dtos = p.getContent().stream().map(this::toDto).toList();
 
         return toPagedResponse(p);
@@ -211,7 +211,7 @@ public class HistoryServiceImpl implements HistoryService {
         User responsible = userRepository.findById(responsibleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Responsible", "id", responsibleId));
         Pageable pg = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<History> p = historyRepository.findByUser(responsible, pg);
+        Page<History> p = historyRepository.findByResponsible(responsible, pg);
         List<HistoryResponse> dtos = p.getContent().stream().map(this::toDto).toList();
 
         return toPagedResponse(p);
